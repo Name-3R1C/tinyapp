@@ -2,8 +2,13 @@ const express = require("express");
 const app = express();
 const PORT = 8080;
 
+const charSet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 function generateRandomString() {
-  return Math.random().toString(36).slice(2,8);
+  let randomString = '';
+  for (let i = 0; i < 6; i++){
+    randomString += charSet.charAt(Math.floor(Math.random() * charSet.length));
+  }
+  return randomString;
 }
 
 app.set("view engine", "ejs");
@@ -41,9 +46,10 @@ app.get("/urls/:id", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body);
-  res.send("OK");
-})
+  const randomID = generateRandomString();
+  urlDatabase[randomID] = req.body.longURL;
+  res.redirect(`urls/${randomID}`);
+});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}`);
