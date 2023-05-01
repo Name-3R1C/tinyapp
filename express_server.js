@@ -5,7 +5,7 @@ const PORT = 8080;
 const charSet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 function generateRandomString() {
   let randomString = '';
-  for (let i = 0; i < 6; i++){
+  for (let i = 0; i < 6; i++) {
     randomString += charSet.charAt(Math.floor(Math.random() * charSet.length));
   }
   return randomString;
@@ -43,6 +43,11 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:id", (req, res) => {
   const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id]};
   res.render("urls_show", templateVars);
+});
+
+app.get("/u/:id", (req, res) => {
+  const longURL = urlDatabase[req.params.id];
+  res.redirect(longURL);
 });
 
 app.post("/urls", (req, res) => {
