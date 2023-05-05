@@ -19,10 +19,9 @@
       </div>
     </div>
     <div class="login">
-      <% console.log("testing: " + username)%>
       <% if (username) { %>
         <form class="form-inline" method="POST" action="/logout">
-          <p>Logged in as: <%= username %></p>
+          Logged in as: <%= username %> &nbsp;
           <button type="submit" class="btn btn-primary">Logout</button>
         </form>
       <% } else {%>
