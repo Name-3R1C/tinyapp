@@ -29,10 +29,6 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
-app.get("/hello", (req,res) => {
-  res.send("<thml><body>Hello <b>World</b></body></html>\n");
-});
-
 app.get("/urls", (req, res) => {
   const templateVars = {
     urls: urlDatabase,
@@ -57,6 +53,10 @@ app.get("/urls/:id", (req, res) => {
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id];
   res.redirect(longURL);
+});
+
+app.get("/register", (req, res) => {
+  res.render("urls_registration");
 });
 
 app.post("/urls", (req, res) => {
