@@ -19,9 +19,9 @@
       </div>
     </div>
     <div class="login">
-      <% if (username) { %>
+      <% if (user.email) { %>
         <form class="form-inline" method="POST" action="/logout">
-          Logged in as: <%= username %>! &nbsp;
+          Logged in as: <%= user.email %>! &nbsp;
           <button type="submit" class="btn btn-primary">Logout</button>
         </form>
       <% } else {%>
@@ -30,7 +30,7 @@
             class="form-control"
             type="text"
             name="login"
-            placeholder="Username"
+            placeholder="User.email"
             style="width: 200px; margin: 1em;"
           />
           <button type="submit" class="btn btn-primary">Login</button>

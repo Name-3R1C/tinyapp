@@ -45,7 +45,7 @@ app.get("/urls.json", (req, res) => {
 app.get("/urls", (req, res) => {
   const templateVars = {
     urls: urlDatabase,
-    users,
+    user: users[req.cookies.name],
   };
   res.render("urls_index", templateVars);
 });
@@ -73,9 +73,9 @@ app.get("/register", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  const user_id = generateRandomString();
-  urlDatabase[user_id] = req.body.longURL;
-  res.redirect(`urls/${user_id}`);
+  const userID = generateRandomString();
+  urlDatabase[userID] = req.body.longURL;
+  res.redirect(`urls/${userID}`);
 });
 
 app.post("/urls/:id/delete", (req, res) => {
@@ -99,16 +99,16 @@ app.post("/logout", (req, res) => {
 });
 
 app.post("/register", (req, res) => {
-  const user_id = generateRandomString();
+  const userID = generateRandomString();
   const newUser = {
-    id: user_id,
+    id: userID,
     email: req.body.email,
     password: req.body.password,
   };
 
-  users[user_id] = newUser;
+  users[userID] = newUser;
   console.log(users);
-  res.cookie('name', user_id);
+  res.cookie('name', userID);
   res.redirect("/urls");
 });
 
