@@ -14,7 +14,7 @@ const generateRandomString = function() {
   return randomString;
 };
 
-const userLookUpByEmail = function (email) {
+const userLookUpByEmail = function(email) {
   for (const user in users) {
     if (users[user].email === email) {
       return users[user];
