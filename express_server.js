@@ -2,9 +2,9 @@ const express = require("express");
 const cookieParser = require('cookie-parser');
 const app = express();
 app.use(cookieParser());
+app.set("view engine", "ejs");
 const PORT = 8000;
 
-app.set("view engine", "ejs");
 const charSet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 const generateRandomString = function() {
   let randomString = '';
@@ -12,6 +12,15 @@ const generateRandomString = function() {
     randomString += charSet.charAt(Math.floor(Math.random() * charSet.length));
   }
   return randomString;
+};
+
+const userLookUpByEmail = function (email) {
+  for (const user in users) {
+    if (users[user].email === email) {
+      return users[user];
+    }
+  }
+  return null;
 };
 
 const users = {
@@ -99,15 +108,27 @@ app.post("/logout", (req, res) => {
 });
 
 app.post("/register", (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+
+  if (!email || !password) {
+    return res.status(400).send("Please provide an Email and password");
+  }
+
+  if (userLookUpByEmail(email)) {
+    return res.status(400).send("Email already registed");
+  }
+
   const userID = generateRandomString();
   const newUser = {
     id: userID,
-    email: req.body.email,
-    password: req.body.password,
+    email,
+    password,
   };
 
   users[userID] = newUser;
-  console.log(users);
+  // console.log("updated UsersList: ");
+  // console.log(users);
   res.cookie('name', userID);
   res.redirect("/urls");
 });
