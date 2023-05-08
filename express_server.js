@@ -26,7 +26,7 @@ const userLookUpByEmail = function(email) {
 const users = {
   userRandomID: {
     id: "userRandomID",
-    email: "user@example.com",
+    email: "example@hotmail.com",
     password: "123",
   },
   user2RandomID: {
@@ -54,8 +54,9 @@ app.get("/urls.json", (req, res) => {
 app.get("/urls", (req, res) => {
   const templateVars = {
     urls: urlDatabase,
-    user: users[req.cookies.name],
+    user: users[req.cookies.userID],
   };
+  // user NOT set because have NOT loggedin!
   res.render("urls_index", templateVars);
 });
 
@@ -102,12 +103,14 @@ app.post("/urls/:id", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  res.cookie('name', req.body.login);
+  const email = req.body.email;
+  const user = userLookUpByEmail(email);
+  res.cookie('userID', user.id);
   res.redirect("/urls");
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('name');
+  res.clearCookie('userID');
   res.redirect("/urls");
 });
 
@@ -133,7 +136,7 @@ app.post("/register", (req, res) => {
   users[userID] = newUser;
   // console.log("updated UsersList: ");
   // console.log(users);
-  res.cookie('name', userID);
+  res.cookie('userID', userID);
   res.redirect("/urls");
 });
 
