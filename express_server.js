@@ -56,7 +56,6 @@ app.get("/urls", (req, res) => {
     urls: urlDatabase,
     user: users[req.cookies.userID],
   };
-  // user NOT set because have NOT loggedin!
   res.render("urls_index", templateVars);
 });
 

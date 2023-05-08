@@ -29,6 +29,7 @@
         </div>
       <% } else { %>
         <form method="POST" action="/logout">
+          Logged in as: <%= user.email %> &nbsp;
           <button type="submit" class="btn btn-primary">Logout</button>
         </form>
       <% } %>
