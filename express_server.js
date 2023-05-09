@@ -43,7 +43,9 @@ const urlDatabase = {
 
 app.use(express.urlencoded({ extended: true}));
 
+// Does not seem to be needed and have no instructions of what to do with it, so instead of showing Hello, I redirect it to the TinyApp page
 app.get("/", (req, res) => {
+  res.redirect("/urls");
   res.send("Hello!");
 });
 
@@ -52,26 +54,44 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = {
-    urls: urlDatabase,
-    user: users[req.cookies.userID],
+  const userID = req.cookies.userID;  
+  const user = users[userID];
+  if(user) {
+    const templateVars = {
+      urls: urlDatabase,
+      user: users[req.cookies.userID],
+    };
+    res.render("urls_index", templateVars);
+  } else {
+    res.redirect("/login");
   };
-  res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = {user: null};
-  res.render("urls_new", templateVars);
+  const userID = req.cookies.userID;  
+  const user = users[userID];
+  if(user) {
+    const templateVars = { user };
+    res.render("urls_new", templateVars);
+  } else {
+    res.redirect("/login");
+  };
 });
 
 app.get("/urls/:id", (req, res) => {
-  const templateVars = {
-    id: req.params.id,
-    longURL: urlDatabase[req.params.id],
-    users,
-    user: null,
+  const userID = req.cookies.userID;  
+  const user = users[userID];
+  if(user) {
+    const templateVars = {
+      id: req.params.id,
+      longURL: urlDatabase[req.params.id],
+      users,
+      user,
+    };
+    res.render("urls_show", templateVars);
+  } else {
+    res.redirect("/login");
   };
-  res.render("urls_show", templateVars);
 });
 
 app.get("/u/:id", (req, res) => {
