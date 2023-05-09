@@ -19,17 +19,17 @@
       </div>
     </div>
 
-    <div class="login-register">
+    <div>
       <% if (!user) { %>
         <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
           <div class="navbar-nav">
-            <a class="nav-item nav-link" href="/register">Register</a>
             <a class="nav-item nav-link" href="/login">Login</a>
+            <a class="nav-item nav-link" href="/register">Register</a>
           </div>
         </div>
       <% } else { %>
         <form method="POST" action="/logout">
-          Logged in as: <%= user.email %> &nbsp;
+          Logged In As: <%= user.email %> &nbsp;
           <button type="submit" class="btn btn-primary">Logout</button>
         </form>
       <% } %>

@@ -60,7 +60,8 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new", users);
+  const templateVars = {user: null};
+  res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:id", (req, res) => {
@@ -68,6 +69,7 @@ app.get("/urls/:id", (req, res) => {
     id: req.params.id,
     longURL: urlDatabase[req.params.id],
     users,
+    user: null,
   };
   res.render("urls_show", templateVars);
 });
@@ -78,11 +80,13 @@ app.get("/u/:id", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  res.render("urls_register");
+  const templateVars = {user: null};
+  res.render("urls_register", templateVars);
 });
 
 app.get("/login", (req, res) => {
-  res.render("urls_login");
+  const templateVars = {user: null};
+  res.render("urls_login", templateVars);
 });
 
 app.post("/urls", (req, res) => {
@@ -104,13 +108,20 @@ app.post("/urls/:id", (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const user = userLookUpByEmail(email);
+
+  if (!user) {
+    return res.status(403).send("E-mail does not exits");
+  }
+  if (user.password !== req.body.password) {
+    return res.status(403).send("Password does not match");
+  }
   res.cookie('userID', user.id);
   res.redirect("/urls");
 });
 
 app.post("/logout", (req, res) => {
   res.clearCookie('userID');
-  res.redirect("/urls");
+  res.redirect("/login");
 });
 
 app.post("/register", (req, res) => {
@@ -118,11 +129,10 @@ app.post("/register", (req, res) => {
   const password = req.body.password;
 
   if (!email || !password) {
-    return res.status(400).send("Please provide an Email and password");
+    return res.status(400).send("Please provide an E-mail and password");
   }
-
   if (userLookUpByEmail(email)) {
-    return res.status(400).send("Email already registed");
+    return res.status(400).send("E-mail already registed");
   }
 
   const userID = generateRandomString();
@@ -133,8 +143,6 @@ app.post("/register", (req, res) => {
   };
 
   users[userID] = newUser;
-  // console.log("updated UsersList: ");
-  // console.log(users);
   res.cookie('userID', userID);
   res.redirect("/urls");
 });
