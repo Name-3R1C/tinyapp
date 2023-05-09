@@ -54,44 +54,38 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const userID = req.cookies.userID;  
-  const user = users[userID];
-  if(user) {
-    const templateVars = {
-      urls: urlDatabase,
-      user: users[req.cookies.userID],
-    };
-    res.render("urls_index", templateVars);
-  } else {
-    res.redirect("/login");
+  const templateVars = {
+    urls: urlDatabase,
+    user: users[req.cookies.userID],
   };
+  res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  const userID = req.cookies.userID;  
+  const userID = req.cookies.userID;
   const user = users[userID];
-  if(user) {
+  if (user) {
     const templateVars = { user };
     res.render("urls_new", templateVars);
   } else {
     res.redirect("/login");
-  };
+  }
 });
 
 app.get("/urls/:id", (req, res) => {
-  const userID = req.cookies.userID;  
+  if (!urlDatabase[req.params.id]) {
+    return res.status(403).send("Invalided Shortened URL, check again");
+  }
+  
+  const userID = req.cookies.userID;
   const user = users[userID];
-  if(user) {
-    const templateVars = {
-      id: req.params.id,
-      longURL: urlDatabase[req.params.id],
-      users,
-      user,
-    };
-    res.render("urls_show", templateVars);
-  } else {
-    res.redirect("/login");
+  const templateVars = {
+    id: req.params.id,
+    longURL: urlDatabase[req.params.id],
+    users,
+    user,
   };
+  res.render("urls_show", templateVars);
 });
 
 app.get("/u/:id", (req, res) => {
@@ -100,29 +94,60 @@ app.get("/u/:id", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  const templateVars = {user: null};
-  res.render("urls_register", templateVars);
+  const useID = req.cookies.userID;
+  const user = users[useID];
+  if (!user) {
+    const templateVars = {user: null};
+    res.render("urls_register", templateVars);
+  } else {
+    res.redirect("/urls");
+  }
 });
 
 app.get("/login", (req, res) => {
-  const templateVars = {user: null};
-  res.render("urls_login", templateVars);
+  const useID = req.cookies.userID;
+  const user = users[useID];
+  if (!user) {
+    const templateVars = {user: null};
+    res.render("urls_login", templateVars);
+  } else {
+    res.redirect("/urls");
+  }
+  
 });
 
 app.post("/urls", (req, res) => {
-  const userID = generateRandomString();
-  urlDatabase[userID] = req.body.longURL;
-  res.redirect(`urls/${userID}`);
+  const useID = req.cookies.userID;
+  const user = users[useID];
+  if (user) {
+    const userID = generateRandomString();
+    urlDatabase[userID] = req.body.longURL;
+    res.redirect(`urls/${userID}`);
+  } else {
+    return res.status(403).send("Login required to use shorten URLs");
+  }
 });
 
 app.post("/urls/:id/delete", (req, res) => {
-  delete urlDatabase[req.params.id];
-  res.redirect("/urls");
+  const useID = req.cookies.userID;
+  const user = users[useID];
+  if (user) {
+    delete urlDatabase[req.params.id];
+    res.redirect("/urls");
+  } else {
+    return res.status(403).send("Login in required to delete URL");
+  }
 });
 
 app.post("/urls/:id", (req, res) => {
-  urlDatabase[req.params.id] = req.body.longURL;
-  res.redirect("/urls");
+  const useID = req.cookies.userID;
+  const user = users[useID];
+  if (user) {
+    urlDatabase[req.params.id] = req.body.longURL;
+    res.redirect("/urls");
+  } else {
+    return res.status(403).send("Login in required to edit URL");
+  }
 });
 
 app.post("/login", (req, res) => {
