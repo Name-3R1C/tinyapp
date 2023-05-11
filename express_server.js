@@ -5,15 +5,28 @@ app.use(cookieParser());
 app.set("view engine", "ejs");
 const PORT = 8000;
 
+/**
+ * Generate a random string from 0-9, a-z and A-Z, with a length of 6.
+ * @constructor
+ */
 const charSet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 const generateRandomString = function() {
   let randomString = '';
   for (let i = 0; i < 6; i++) {
     randomString += charSet.charAt(Math.floor(Math.random() * charSet.length));
   }
+  // ShortURL must start with a letter because urlDatabase is an object
+  if (isNaN(randomString.charAt(0))) {
+    randomString[0] = 'a';
+  }
   return randomString;
 };
 
+/**
+ *
+ * @constructor
+ * @param {string} email - an email address
+ */
 const userLookUpByEmail = function(email) {
   for (const user in users) {
     if (users[user].email === email) {
@@ -25,20 +38,32 @@ const userLookUpByEmail = function(email) {
 
 const users = {
   userRandomID: {
-    id: "userRandomID",
+    id: "user1",
     email: "example@hotmail.com",
     password: "123",
   },
   user2RandomID: {
-    id: "user2RandomID",
+    id: "user2",
     email: "user2@example.com",
     password: "456",
   },
 };
 
+// const urlDatabase = {
+//   "b2xVn2": "http://www.lighthouselabs.ca",
+//   "asm5xK": "http://www.google.com"
+// };
+
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b2xVn2: {
+    longURL: "http://www.lighthouselabs.ca",
+    userID: "userRandomID",
+  },
+
+  asm5xK: {
+    longURL: "http://www.google.com",
+    useID: "user2RandomID",
+  },
 };
 
 app.use(express.urlencoded({ extended: true}));
@@ -58,6 +83,8 @@ app.get("/urls", (req, res) => {
     urls: urlDatabase,
     user: users[req.cookies.userID],
   };
+  console.log("urlDatabase------------------")
+  console.log(urlDatabase)
   res.render("urls_index", templateVars);
 });
 
@@ -81,7 +108,8 @@ app.get("/urls/:id", (req, res) => {
   const user = users[userID];
   const templateVars = {
     id: req.params.id,
-    longURL: urlDatabase[req.params.id],
+    url: urlDatabase,
+    shortURL: req.params.id,
     users,
     user,
   };
@@ -120,17 +148,19 @@ app.post("/urls", (req, res) => {
   const useID = req.cookies.userID;
   const user = users[useID];
   if (user) {
-    const userID = generateRandomString();
-    urlDatabase[userID] = req.body.longURL;
-    res.redirect(`urls/${userID}`);
+    const shortURL = generateRandomString();
+    urlDatabase[shortURL] = {
+      longURL: req.body.longURL,
+      useID: useID
+    };
+    res.redirect(`urls/${shortURL}`);
   } else {
     return res.status(403).send("Login required to use shorten URLs");
   }
 });
 
 app.post("/urls/:id/delete", (req, res) => {
-  const useID = req.cookies.userID;
-  const user = users[useID];
+  const user = users[req.cookies.userID];
   if (user) {
     delete urlDatabase[req.params.id];
     res.redirect("/urls");
@@ -140,10 +170,10 @@ app.post("/urls/:id/delete", (req, res) => {
 });
 
 app.post("/urls/:id", (req, res) => {
-  const useID = req.cookies.userID;
-  const user = users[useID];
+  const user = users[req.cookies.userID];
   if (user) {
-    urlDatabase[req.params.id] = req.body.longURL;
+    const shortURL = req.params.id;
+    urlDatabase[req.params.id].longURL = req.body.longURL;
     res.redirect("/urls");
   } else {
     return res.status(403).send("Login in required to edit URL");
