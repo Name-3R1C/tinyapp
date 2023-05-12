@@ -7,7 +7,7 @@ const PORT = 8000;
 app.use(express.urlencoded({ extended: true}));
 
 /**
- * @description
+ * @description generate a string 6 random characters from a-z, A-Z and 0-9.
  * @returns string of 6 random characters
  */
 const generateRandomString = function() {
@@ -24,7 +24,7 @@ const generateRandomString = function() {
 };
 
 /**
- * @description
+ * @description check if an given email exits
  * @param {string} email - an email address
  */
 const userLookUpByEmail = function(email) {
@@ -36,6 +36,11 @@ const userLookUpByEmail = function(email) {
   return null;
 };
 
+/**
+ * @description get all urls that belong to specific user
+ * @param {*} id user ID
+ * @returns url(s)
+ */
 const urlsForUser = function(id) {
   const userUrl = {};
   for (const url in urlDatabase) {
@@ -82,6 +87,7 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
+  console.log(urlDatabase);
   const userID = req.cookies.userID;
   if (!userID) {
     return res.status(403).send(`
@@ -128,7 +134,7 @@ app.get("/urls/:id", (req, res) => {
   }
 
   if (urlDatabase[req.params.id].userID !== userID) {
-    return res.status(401).send("Unauthorized request");
+    return res.status(401).send("Unauthorized access request, url does no belongs to this user");
   }
   
   const templateVars = {
@@ -153,9 +159,9 @@ app.get("/register", (req, res) => {
   if (!user) {
     const templateVars = {user: null};
     res.render("urls_register", templateVars);
+  } else {
+    res.redirect("/urls");
   }
-  
-  res.redirect("/urls");
 });
 
 app.get("/login", (req, res) => {
@@ -165,9 +171,9 @@ app.get("/login", (req, res) => {
   if (!user) {
     const templateVars = {user: null};
     res.render("urls_login", templateVars);
+  } else {
+    res.redirect("/urls");
   }
-
-  res.redirect("/urls");
 });
 
 app.post("/urls", (req, res) => {
@@ -177,7 +183,6 @@ app.post("/urls", (req, res) => {
     return res.status(403).send("Login required to use shorten URLs");
   }
 
-  const user = users[userID];
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = {
     longURL: req.body.longURL,
@@ -187,24 +192,35 @@ app.post("/urls", (req, res) => {
 });
 
 app.post("/urls/:id/delete", (req, res) => {
+  if (!urlDatabase[req.params.id]) {
+    return res.status(403).send("Invalided URL, check again");
+  }
+
   const user = users[req.cookies.userID];
 
   if (!user) {
     return res.status(403).send("Login in required to delete URL");
   }
 
+  if (user.id !== urlDatabase[req.params.id].userID) {
+    return res.status(401).send("Unauthorized delete request, url does no belongs to this user");
+  }
+  
   delete urlDatabase[req.params.id];
   res.redirect("/urls");
 });
 
 app.post("/urls/:id", (req, res) => {
   const user = users[req.cookies.userID];
-
-  if (user) {
+  
+  if (!user) {
     return res.status(403).send("Login in required to edit URL");
   }
 
-  const shortURL = req.params.id;
+  if (user.id !== urlDatabase[req.params.id].userID) {
+    return res.status(401).send("Unauthorized edit request, url does no belongs to this user");
+  }
+
   urlDatabase[req.params.id].longURL = req.body.longURL;
   res.redirect("/urls");
 });
