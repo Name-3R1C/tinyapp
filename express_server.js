@@ -4,13 +4,14 @@ const app = express();
 app.use(cookieParser());
 app.set("view engine", "ejs");
 const PORT = 8000;
+app.use(express.urlencoded({ extended: true}));
 
 /**
- * Generate a random string from 0-9, a-z and A-Z, with a length of 6.
- * @constructor
+ * @description
+ * @returns string of 6 random characters
  */
-const charSet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 const generateRandomString = function() {
+  const charSet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let randomString = '';
   for (let i = 0; i < 6; i++) {
     randomString += charSet.charAt(Math.floor(Math.random() * charSet.length));
@@ -23,8 +24,7 @@ const generateRandomString = function() {
 };
 
 /**
- *
- * @constructor
+ * @description
  * @param {string} email - an email address
  */
 const userLookUpByEmail = function(email) {
@@ -36,42 +36,45 @@ const userLookUpByEmail = function(email) {
   return null;
 };
 
+const urlsForUser = function(id) {
+  const userUrl = {};
+  for (const url in urlDatabase) {
+    if (urlDatabase[url].userID === id) {
+      userUrl[url] = urlDatabase[url];
+    }
+  }
+  return userUrl;
+};
+
 const users = {
-  userRandomID: {
+  user1: {
     id: "user1",
     email: "example@hotmail.com",
     password: "123",
   },
-  user2RandomID: {
+  user2: {
     id: "user2",
     email: "user2@example.com",
     password: "456",
   },
 };
 
-// const urlDatabase = {
-//   "b2xVn2": "http://www.lighthouselabs.ca",
-//   "asm5xK": "http://www.google.com"
-// };
-
 const urlDatabase = {
   b2xVn2: {
     longURL: "http://www.lighthouselabs.ca",
-    userID: "userRandomID",
+    userID: "user1",
   },
 
   asm5xK: {
     longURL: "http://www.google.com",
-    useID: "user2RandomID",
+    userID: "user2",
   },
 };
 
-app.use(express.urlencoded({ extended: true}));
-
 // Does not seem to be needed and have no instructions of what to do with it, so instead of showing Hello, I redirect it to the TinyApp page
 app.get("/", (req, res) => {
-  res.redirect("/urls");
-  res.send("Hello!");
+  // res.send("Hello!");
+  res.redirect("/login");
 });
 
 app.get("/urls.json", (req, res) => {
@@ -79,39 +82,61 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
+  const userID = req.cookies.userID;
+  if (!userID) {
+    return res.status(403).send(`
+    <div> 
+      <h2>Login to use this feature</h2>
+      <a href = "/login">Login</a>
+    </div>
+  `);
+  }
   const templateVars = {
-    urls: urlDatabase,
-    user: users[req.cookies.userID],
+    urls: urlsForUser(userID),
+    user: users[userID],
   };
-  console.log("urlDatabase------------------")
-  console.log(urlDatabase)
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
   const userID = req.cookies.userID;
-  const user = users[userID];
-  if (user) {
-    const templateVars = { user };
-    res.render("urls_new", templateVars);
-  } else {
-    res.redirect("/login");
+  if (!userID) {
+    return res.status(403).send(`
+    <div> 
+      <h2>Login to use this feature</h2>
+      <a href = "/login">Login</a>
+    </div>
+  `);
   }
+  const user = users[userID];
+  const templateVars = { user };
+  res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:id", (req, res) => {
+  const userID = req.cookies.userID;
+  if (!userID) {
+    return res.status(403).send(`
+    <div> 
+      <h2>Login to use this feature</h2>
+      <a href = "/login">Login</a>
+    </div>
+  `);
+  }
   if (!urlDatabase[req.params.id]) {
     return res.status(403).send("Invalided Shortened URL, check again");
   }
+
+  if (urlDatabase[req.params.id].userID !== userID) {
+    return res.status(401).send("Unauthorized request");
+  }
   
-  const userID = req.cookies.userID;
-  const user = users[userID];
   const templateVars = {
     id: req.params.id,
     url: urlDatabase,
     shortURL: req.params.id,
+    user: users[userID],
     users,
-    user,
   };
   res.render("urls_show", templateVars);
 });
@@ -122,62 +147,66 @@ app.get("/u/:id", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  const useID = req.cookies.userID;
-  const user = users[useID];
+  const userID = req.cookies.userID;
+  const user = users[userID];
+
   if (!user) {
     const templateVars = {user: null};
     res.render("urls_register", templateVars);
-  } else {
-    res.redirect("/urls");
   }
+  
+  res.redirect("/urls");
 });
 
 app.get("/login", (req, res) => {
-  const useID = req.cookies.userID;
-  const user = users[useID];
+  const userID = req.cookies.userID;
+  const user = users[userID];
+
   if (!user) {
     const templateVars = {user: null};
     res.render("urls_login", templateVars);
-  } else {
-    res.redirect("/urls");
   }
-  
+
+  res.redirect("/urls");
 });
 
 app.post("/urls", (req, res) => {
-  const useID = req.cookies.userID;
-  const user = users[useID];
-  if (user) {
-    const shortURL = generateRandomString();
-    urlDatabase[shortURL] = {
-      longURL: req.body.longURL,
-      useID: useID
-    };
-    res.redirect(`urls/${shortURL}`);
-  } else {
+  const userID = req.cookies.userID;
+
+  if (!userID) {
     return res.status(403).send("Login required to use shorten URLs");
   }
+
+  const user = users[userID];
+  const shortURL = generateRandomString();
+  urlDatabase[shortURL] = {
+    longURL: req.body.longURL,
+    userID: userID
+  };
+  res.redirect(`urls/${shortURL}`);
 });
 
 app.post("/urls/:id/delete", (req, res) => {
   const user = users[req.cookies.userID];
-  if (user) {
-    delete urlDatabase[req.params.id];
-    res.redirect("/urls");
-  } else {
+
+  if (!user) {
     return res.status(403).send("Login in required to delete URL");
   }
+
+  delete urlDatabase[req.params.id];
+  res.redirect("/urls");
 });
 
 app.post("/urls/:id", (req, res) => {
   const user = users[req.cookies.userID];
+
   if (user) {
-    const shortURL = req.params.id;
-    urlDatabase[req.params.id].longURL = req.body.longURL;
-    res.redirect("/urls");
-  } else {
     return res.status(403).send("Login in required to edit URL");
   }
+
+  const shortURL = req.params.id;
+  urlDatabase[req.params.id].longURL = req.body.longURL;
+  res.redirect("/urls");
 });
 
 app.post("/login", (req, res) => {
