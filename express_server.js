@@ -1,5 +1,6 @@
 const express = require("express");
 const cookieParser = require('cookie-parser');
+const bcrypt = require("bcryptjs");
 const app = express();
 app.use(cookieParser());
 app.set("view engine", "ejs");
@@ -51,30 +52,8 @@ const urlsForUser = function(id) {
   return userUrl;
 };
 
-const users = {
-  user1: {
-    id: "user1",
-    email: "example@hotmail.com",
-    password: "123",
-  },
-  user2: {
-    id: "user2",
-    email: "user2@example.com",
-    password: "456",
-  },
-};
-
-const urlDatabase = {
-  b2xVn2: {
-    longURL: "http://www.lighthouselabs.ca",
-    userID: "user1",
-  },
-
-  asm5xK: {
-    longURL: "http://www.google.com",
-    userID: "user2",
-  },
-};
+const users = {};
+const urlDatabase = {};
 
 // Does not seem to be needed and have no instructions of what to do with it, so instead of showing Hello, I redirect it to the TinyApp page
 app.get("/", (req, res) => {
@@ -87,7 +66,6 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  console.log(urlDatabase);
   const userID = req.cookies.userID;
   if (!userID) {
     return res.status(403).send(`
@@ -232,7 +210,7 @@ app.post("/login", (req, res) => {
   if (!user) {
     return res.status(403).send("E-mail does not exits");
   }
-  if (user.password !== req.body.password) {
+  if(!bcrypt.compareSync(req.body.password, user.hashedPassword)) {
     return res.status(403).send("Password does not match");
   }
   res.cookie('userID', user.id);
@@ -247,6 +225,7 @@ app.post("/logout", (req, res) => {
 app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
+  const hashedPassword = bcrypt.hashSync(password, 10);
 
   if (!email || !password) {
     return res.status(400).send("Please provide an E-mail and password");
@@ -259,7 +238,7 @@ app.post("/register", (req, res) => {
   const newUser = {
     id: userID,
     email,
-    password,
+    hashedPassword,
   };
 
   users[userID] = newUser;
