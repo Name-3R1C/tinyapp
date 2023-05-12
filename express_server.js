@@ -214,7 +214,7 @@ app.post("/login", (req, res) => {
   if (!user) {
     return res.status(403).send("E-mail does not exits");
   }
-  if(!bcrypt.compareSync(req.body.password, user.hashedPassword)) {
+  if (!bcrypt.compareSync(req.body.password, user.hashedPassword)) {
     return res.status(403).send("Password does not match");
   }
 
