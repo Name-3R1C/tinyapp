@@ -1,8 +1,12 @@
+const cookieSession = require("cookie-session");
 const express = require("express");
-const cookieParser = require('cookie-parser');
 const bcrypt = require("bcryptjs");
 const app = express();
-app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ['LHL', 'WebDevFlex'],
+  maxAge: 24 * 60 * 60 * 1000
+}));
 app.set("view engine", "ejs");
 const PORT = 8000;
 app.use(express.urlencoded({ extended: true}));
@@ -66,7 +70,7 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const userID = req.cookies.userID;
+  const userID = req.session.userID;
   if (!userID) {
     return res.status(403).send(`
     <div> 
@@ -83,7 +87,7 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  const userID = req.cookies.userID;
+  const userID = req.session.userID;
   if (!userID) {
     return res.status(403).send(`
     <div> 
@@ -98,7 +102,7 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
-  const userID = req.cookies.userID;
+  const userID = req.session.userID;
   if (!userID) {
     return res.status(403).send(`
     <div> 
@@ -131,7 +135,7 @@ app.get("/u/:id", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  const userID = req.cookies.userID;
+  const userID = req.session.userID;
   const user = users[userID];
 
   if (!user) {
@@ -143,7 +147,7 @@ app.get("/register", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-  const userID = req.cookies.userID;
+  const userID = req.session.userID;
   const user = users[userID];
 
   if (!user) {
@@ -155,7 +159,7 @@ app.get("/login", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  const userID = req.cookies.userID;
+  const userID = req.session.userID;
 
   if (!userID) {
     return res.status(403).send("Login required to use shorten URLs");
@@ -174,7 +178,7 @@ app.post("/urls/:id/delete", (req, res) => {
     return res.status(403).send("Invalided URL, check again");
   }
 
-  const user = users[req.cookies.userID];
+  const user = users[req.session.userID];
 
   if (!user) {
     return res.status(403).send("Login in required to delete URL");
@@ -189,7 +193,7 @@ app.post("/urls/:id/delete", (req, res) => {
 });
 
 app.post("/urls/:id", (req, res) => {
-  const user = users[req.cookies.userID];
+  const user = users[req.session.userID];
   
   if (!user) {
     return res.status(403).send("Login in required to edit URL");
@@ -213,12 +217,13 @@ app.post("/login", (req, res) => {
   if(!bcrypt.compareSync(req.body.password, user.hashedPassword)) {
     return res.status(403).send("Password does not match");
   }
-  res.cookie('userID', user.id);
+
+  req.session.userID = user.id;
   res.redirect("/urls");
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('userID');
+  req.session = null;
   res.redirect("/login");
 });
 
@@ -242,7 +247,7 @@ app.post("/register", (req, res) => {
   };
 
   users[userID] = newUser;
-  res.cookie('userID', userID);
+  req.session.userID = userID;
   res.redirect("/urls");
 });
 
