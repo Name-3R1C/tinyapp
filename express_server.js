@@ -9,7 +9,7 @@ app.use(cookieSession({
   maxAge: 24 * 60 * 60 * 1000
 }));
 app.set("view engine", "ejs");
-const PORT = 8000;
+const PORT = 8080;
 app.use(express.urlencoded({ extended: true}));
 
 /**
@@ -51,8 +51,9 @@ app.get("/", (req, res) => {
   const userID = req.session.userID;
   if (!userID) {
     res.redirect("/login");
+  } else {
+    res.redirect("/urls");
   }
-  res.redirect("/urls");
 });
 
 app.get("/urls.json", (req, res) => {
@@ -79,12 +80,7 @@ app.get("/urls", (req, res) => {
 app.get("/urls/new", (req, res) => {
   const userID = req.session.userID;
   if (!userID) {
-    return res.status(403).send(`
-    <div> 
-      <h2>Login to use this feature</h2>
-      <a href = "/login">Login</a>
-    </div>
-  `);
+    res.redirect("/login");
   }
   const user = users[userID];
   const templateVars = { user };
@@ -92,6 +88,10 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
+  if (!urlDatabase[req.params.id]) {
+    return res.status(403).send("Invalided Shortened URL, check again");
+  }
+
   const userID = req.session.userID;
   if (!userID) {
     return res.status(403).send(`
@@ -100,9 +100,6 @@ app.get("/urls/:id", (req, res) => {
       <a href = "/login">Login</a>
     </div>
   `);
-  }
-  if (!urlDatabase[req.params.id]) {
-    return res.status(403).send("Invalided Shortened URL, check again");
   }
 
   if (urlDatabase[req.params.id].userID !== userID) {
@@ -121,6 +118,9 @@ app.get("/urls/:id", (req, res) => {
 
 app.get("/u/:id", (req, res) => {
   const url = urlDatabase[req.params.id];
+  if (!url) {
+    return res.status(404).send("URL does not exit");
+  }
   res.redirect(url.longURL);
 });
 
@@ -150,7 +150,7 @@ app.get("/login", (req, res) => {
 
 app.post("/urls", (req, res) => {
   const userID = req.session.userID;
-
+  
   if (!userID) {
     return res.status(403).send("Login required to use shorten URLs");
   }
@@ -184,7 +184,7 @@ app.post("/urls/:id/delete", (req, res) => {
 
 app.post("/urls/:id", (req, res) => {
   const user = users[req.session.userID];
-  
+
   if (!user) {
     return res.status(403).send("Login in required to edit URL");
   }
@@ -202,7 +202,7 @@ app.post("/login", (req, res) => {
   const user = getUserByEmail(email, users);
   
   if (!user) {
-    return res.status(403).send("E-mail does not exits");
+    return res.status(404).send("E-mail does not exits");
   }
   if (!bcrypt.compareSync(req.body.password, user.hashedPassword)) {
     return res.status(403).send("Password does not match");
