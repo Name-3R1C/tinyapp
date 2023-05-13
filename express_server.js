@@ -1,5 +1,6 @@
 const cookieSession = require("cookie-session");
 const express = require("express");
+const {getUserByEmail} = require("./helpers.js");
 const bcrypt = require("bcryptjs");
 const app = express();
 app.use(cookieSession({
@@ -12,8 +13,8 @@ const PORT = 8000;
 app.use(express.urlencoded({ extended: true}));
 
 /**
- * @description generate a string 6 random characters from a-z, A-Z and 0-9.
- * @returns string of 6 random characters
+ * @description Generate a string 6 random characters from a-z, A-Z and 0-9.
+ * @returns String of 6 random characters
  */
 const generateRandomString = function() {
   const charSet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -29,22 +30,9 @@ const generateRandomString = function() {
 };
 
 /**
- * @description check if an given email exits
- * @param {string} email - an email address
- */
-const userLookUpByEmail = function(email) {
-  for (const user in users) {
-    if (users[user].email === email) {
-      return users[user];
-    }
-  }
-  return null;
-};
-
-/**
- * @description get all urls that belong to specific user
- * @param {*} id user ID
- * @returns url(s)
+ * @description Get all urls that belong to specific user
+ * @param {*} id User ID
+ * @returns Url(s)
  */
 const urlsForUser = function(id) {
   const userUrl = {};
@@ -59,10 +47,12 @@ const urlsForUser = function(id) {
 const users = {};
 const urlDatabase = {};
 
-// Does not seem to be needed and have no instructions of what to do with it, so instead of showing Hello, I redirect it to the TinyApp page
 app.get("/", (req, res) => {
-  // res.send("Hello!");
-  res.redirect("/login");
+  const userID = req.session.userID;
+  if (!userID) {
+    res.redirect("/login");
+  }
+  res.redirect("/urls");
 });
 
 app.get("/urls.json", (req, res) => {
@@ -130,8 +120,8 @@ app.get("/urls/:id", (req, res) => {
 });
 
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id];
-  res.redirect(longURL);
+  const url = urlDatabase[req.params.id];
+  res.redirect(url.longURL);
 });
 
 app.get("/register", (req, res) => {
@@ -209,8 +199,8 @@ app.post("/urls/:id", (req, res) => {
 
 app.post("/login", (req, res) => {
   const email = req.body.email;
-  const user = userLookUpByEmail(email);
-
+  const user = getUserByEmail(email, users);
+  
   if (!user) {
     return res.status(403).send("E-mail does not exits");
   }
@@ -235,7 +225,7 @@ app.post("/register", (req, res) => {
   if (!email || !password) {
     return res.status(400).send("Please provide an E-mail and password");
   }
-  if (userLookUpByEmail(email)) {
+  if (getUserByEmail(email, users)) {
     return res.status(400).send("E-mail already registed");
   }
 
