@@ -9,6 +9,13 @@ TinyApp is a full stack web application built with Node and Express that allows 
 !["screenshot of login page"](https://github.com/Name-3R1C/tinyapp/blob/main/docs/login_page.png?raw=true)
 !["screenshot of edit URL page"](https://github.com/Name-3R1C/tinyapp/blob/main/docs/edit_page.png?raw=true)
 
+## Features
+- Register new account
+- Login/Logout of your account
+- Generate a new shortened URL for a given address
+- Edit the address associated with a shorten URL
+- Delete a shorten URL
+
 ## Dependencies
 - Node.js
 - Express
@@ -28,3 +35,7 @@ TinyApp is a full stack web application built with Node and Express that allows 
 4. View your list of shortened URLs by clicking the "My URLs" button
 5. Edit the long URL associated with a shortened URL by clicking the "Edit" button next to the shortened URL
 6. Delete a shortened URL by clicking the "Delete" button next to the shortened URL
+
+## Credits
+- [Name-3R1C](https://github.com/Name-3R1C) - Developer
+- [Lighthouse Labs](https://github.com/lighthouse-labs) - Bootcamp
